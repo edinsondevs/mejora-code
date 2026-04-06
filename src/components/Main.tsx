@@ -1,5 +1,7 @@
-import { Category } from '../interfaces/data.interfaces';
 import Card from './Card';
+import { ButtonLinkDocs, InputSearch } from './shared';
+import ButtonLevels from './shared/ButtonLevels';
+import { Category } from '../interfaces/data.interfaces';
 
 function Main({ activeLang, activeLevel, searchQuery, setSearchQuery, setActiveLevel, filteredCategories, currentLevels }: any) {
 
@@ -36,60 +38,11 @@ function Main({ activeLang, activeLevel, searchQuery, setSearchQuery, setActiveL
 							gap: "1rem",
 							alignItems: "center",
 						}}>
-						<a
-							href={activeLang.docLink}
-							target='_blank'
-							rel='noopener noreferrer'
-							style={{
-								padding: "0 20px",
-								borderRadius: "4px",
-								whiteSpace: "nowrap",
-								color: activeLang.color,
-								fontWeight: "bold",
-								opacity: 0.9,
-								transition: "opacity 0.2s",
-							}}>
-							Ver Documentación →
-						</a>
 						{/* Entrada de búsqueda */}
-						<input
-							type='text'
-							placeholder={`Buscar en ${activeLang.name}...`}
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-							style={{
-								padding: "0.6rem 1rem",
-								borderRadius: "20px",
-								border: "1px solid var(--text-muted)",
-								background: "rgba(255,255,255,0.05)",
-								color: "#fff",
-								width: "250px",
-								outline: "none",
-							}}
-							onFocus={(e) =>
-								(e.target.style.borderColor = activeLang.color)
-							}
-							onBlur={(e) =>
-								(e.target.style.borderColor =
-									"var(--text-muted)")
-							}
-						/>
+						<InputSearch activeLang={activeLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
-						<a
-							href={activeLang.docLink}
-							target='_blank'
-							rel='noopener noreferrer'
-							style={{
-								padding: "0.5rem 1rem",
-								border: `1px solid ${activeLang.color}`,
-								borderRadius: "4px",
-								fontSize: "0.9rem",
-								color: activeLang.color,
-								whiteSpace: "nowrap",
-								textDecoration: "none",
-							}}>
-							Docs Oficiales ↗
-						</a>
+						{/* Botón de documentación */}
+						<ButtonLinkDocs activeLang={activeLang} />
 					</div>
 				</header>
 
@@ -102,32 +55,7 @@ function Main({ activeLang, activeLevel, searchQuery, setSearchQuery, setActiveL
 						flexWrap: "wrap",
 					}}>
 					{currentLevels.map((level: string) => (
-						<button
-							key={level}
-							onClick={() => setActiveLevel(level)}
-							style={{
-								background:
-									activeLevel === level ?
-										activeLang.color
-									:	"transparent",
-								color:
-									activeLevel === level ? "#000" : (
-										"var(--text-muted)"
-									),
-								border: `1px solid ${
-									activeLevel === level ?
-										activeLang.color
-									:	"#333"
-								}`,
-								padding: "0.5rem 1.5rem",
-								borderRadius: "20px",
-								cursor: "pointer",
-								fontWeight:
-									activeLevel === level ? "bold" : "normal",
-								transition: "all 0.2s",
-							}}>
-							{level}
-						</button>
+						<ButtonLevels activeLang={activeLang} activeLevel={activeLevel} setActiveLevel={setActiveLevel} level={level} />
 					))}
 				</div>
 
