@@ -1,7 +1,6 @@
 import { Aside, Main, ButtonHamburger } from "./components";
 import useMejoraSelection from "./hooks/useMejoraSelection";
 
-
 function App() {
 	const {
 		isSidebarOpen,
@@ -21,9 +20,13 @@ function App() {
 	if (!hasData || !activeLang) {
 		return <div>No hay datos disponibles</div>;
 	}
-	
+
 	return (
-		<div style={{ display: "flex", minHeight: "100vh" }}>
+		<div
+			style={{
+				display: "flex",
+				minHeight: "100vh",
+			}}>
 			{/* Botón para alternar la barra lateral (Flotante cuando está cerrada) */}
 			{!isSidebarOpen && (
 				<ButtonHamburger

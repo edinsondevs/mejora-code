@@ -11,21 +11,13 @@ const Card = ({ item, color }: { item: Item; color: string }) => {
 		setCopied(true);
 		setTimeout(() => setCopied(false), 2000);
 	};
-	// console.log(item);
+
 	return (
 		<div
 			className='card'
 			style={{
-				background: "var(--bg-card)",
 				border: `1px solid ${color}`,
-				borderRadius: "8px",
-				padding: "1.5rem",
-				marginBottom: "1.5rem",
 				boxShadow: `0 0 5px ${color}20`,
-				transition: "transform 0.2s, box-shadow 0.2s",
-				display: "flex",
-				flexDirection: "column",
-				gap: "0.5rem",
 			}}
 			onMouseEnter={(e) => {
 				e.currentTarget.style.transform = "translateY(-5px)";
@@ -41,36 +33,13 @@ const Card = ({ item, color }: { item: Item; color: string }) => {
 			</p>
 
 			<div style={{ marginTop: "1rem" }}>
-				<div
-					style={{
-						display: "flex",
-						justifyContent: "space-between",
-						alignItems: "center",
-						marginBottom: "0.5rem",
-					}}>
-					<span
-						style={{
-							fontSize: "0.8rem",
-							color: "var(--text-muted)",
-							fontWeight: "bold",
-							textTransform: "uppercase",
-						}}>
+				<div className="card-example-header">
+					<span>
 						Ejemplo
 					</span>
 					<button
 						onClick={handleCopy}
-						style={{
-							background: color,
-							color: "#000",
-							border: "none",
-							borderRadius: "4px",
-							padding: "0.2rem 0.5rem",
-							fontSize: "0.7rem",
-							cursor: "pointer",
-							fontWeight: "bold",
-							opacity: 0.9,
-							transition: "opacity 0.2s",
-						}}
+						style={{ background: color }}
 						onMouseEnter={(e) =>
 							((e.target as HTMLElement).style.opacity = "1")
 						}
@@ -84,13 +53,13 @@ const Card = ({ item, color }: { item: Item; color: string }) => {
 					language='javascript'
 					style={atomDark}
 					customStyle={{
-						background: "#1e1e1e", // Gris oscuro de Visual Studio
+						borderLeft: `2px solid ${color}`,
 						padding: "1rem",
 						borderRadius: "4px",
 						fontSize: "0.85rem",
-						borderLeft: `2px solid ${color}`,
 						margin: 0,
-					}}>
+					}}
+					>
 					{item.example}
 				</SyntaxHighlighter>
 			</div>
