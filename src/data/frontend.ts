@@ -2366,6 +2366,778 @@ const newUser = await ApiService.post<User, CreateUserDto>('/users', userData);`
 			},
 		],
 	},
+	{
+		id: "zustand",
+		name: "Zustand",
+		description:
+			"State management minimalista y escalable sin boilerplate.",
+		color: "#F66E2D",
+		docLink: "https://github.com/pmndrs/zustand",
+		categories: [
+			{
+				name: "Conceptos Básicos",
+				items: [
+					{
+						name: "Create Store",
+						description:
+							"Crear un store simple con estado y acciones.",
+						example: `import { create } from 'zustand';
+
+// Definir el store (sin providers, sin context)
+interface BearStore {
+  bears: number;
+  increasePopulation: () => void;
+  removeAllBears: () => void;
+}
+
+const useBearStore = create<BearStore>((set) => ({
+  bears: 0,
+  increasePopulation: () => set((state) => ({ bears: state.bears + 1 })),
+  removeAllBears: () => set({ bears: 0 }),
+}));
+
+// Uso en componentes
+function BearCounter() {
+  const bears = useBearStore((state) => state.bears);
+  return <h1>{bears} around here...</h1>;
+}
+
+function Controls() {
+  const increasePopulation = useBearStore((state) => state.increasePopulation);
+  return <button onClick={increasePopulation}>Add Bear</button>;
+}`,
+					},
+					{
+						name: "Selecting State",
+						description:
+							"Seleccionar slices específicos del estado para evitar re-renders.",
+						example: `import { create } from 'zustand';
+
+interface Store {
+  firstName: string;
+  lastName: string;
+  age: number;
+}
+
+const usePersonStore = create<Store>((set) => ({
+  firstName: 'John',
+  lastName: 'Doe',
+  age: 30,
+}));
+
+// ❌ MAL: Re-renderiza en CUALQUIER cambio del store
+function BadComponent() {
+  const state = usePersonStore(); // Selecciona TODO
+  return <div>{state.firstName}</div>;
+}
+
+// ✅ BIEN: Solo re-renderiza si firstName cambia
+function GoodComponent() {
+  const firstName = usePersonStore((state) => state.firstName);
+  return <div>{firstName}</div>;
+}
+
+// ✅ Seleccionar múltiples valores
+function MultiSelect() {
+  const { firstName, age } = usePersonStore((state) => ({
+    firstName: state.firstName,
+    age: state.age,
+  }));
+  return <div>{firstName} - {age}</div>;
+}`,
+					},
+					{
+						name: "Updating State",
+						description: "Actualizar estado de forma inmutable.",
+						example: `import { create } from 'zustand';
+
+interface CounterStore {
+  count: number;
+  increment: () => void;
+  decrement: () => void;
+  reset: () => void;
+  setCount: (value: number) => void;
+}
+
+const useCounterStore = create<CounterStore>((set) => ({
+  count: 0,
+  
+  // Actualización funcional (acceso al estado previo)
+  increment: () => set((state) => ({ count: state.count + 1 })),
+  decrement: () => set((state) => ({ count: state.count - 1 })),
+  
+  // Actualización directa (merge automático)
+  reset: () => set({ count: 0 }),
+  
+  // Con parámetros
+  setCount: (value) => set({ count: value }),
+}));
+
+// Uso
+function Counter() {
+  const { count, increment, decrement, reset } = useCounterStore();
+  
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={increment}>+</button>
+      <button onClick={decrement}>-</button>
+      <button onClick={reset}>Reset</button>
+    </div>
+  );
+}`,
+					},
+				],
+			},
+			{
+				name: "Nivel Intermedio",
+				items: [
+					{
+						name: "Async Actions",
+						description:
+							"Manejar operaciones asíncronas (API calls).",
+						example: `import { create } from 'zustand';
+
+interface User {
+  id: string;
+  name: string;
+}
+
+interface UserStore {
+  users: User[];
+  loading: boolean;
+  error: string | null;
+  fetchUsers: () => Promise<void>;
+  addUser: (user: Omit<User, 'id'>) => Promise<void>;
+}
+
+const useUserStore = create<UserStore>((set, get) => ({
+  users: [],
+  loading: false,
+  error: null,
+  
+  fetchUsers: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch('/api/users');
+      const data = await response.json();
+      set({ users: data, loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+    }
+  },
+  
+  addUser: async (userData) => {
+    set({ loading: true });
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
+      const newUser = await response.json();
+      
+      // Actualizar estado con el nuevo usuario
+      set((state) => ({
+        users: [...state.users, newUser],
+        loading: false,
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+    }
+  },
+}));
+
+// Uso
+function UserList() {
+  const { users, loading, error, fetchUsers } = useUserStore();
+  
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+  
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  
+  return (
+    <ul>
+      {users.map(user => <li key={user.id}>{user.name}</li>)}
+    </ul>
+  );
+}`,
+					},
+					{
+						name: "Computed Values (Derived State)",
+						description:
+							"Valores derivados del estado (como getters).",
+						example: `import { create } from 'zustand';
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface CartStore {
+  items: CartItem[];
+  addItem: (item: CartItem) => void;
+  removeItem: (id: string) => void;
+  // Computed values
+  totalItems: () => number;
+  totalPrice: () => number;
+}
+
+const useCartStore = create<CartStore>((set, get) => ({
+  items: [],
+  
+  addItem: (item) => set((state) => ({
+    items: [...state.items, item],
+  })),
+  
+  removeItem: (id) => set((state) => ({
+    items: state.items.filter(item => item.id !== id),
+  })),
+  
+  // Computed: Se calculan cuando se llaman
+  totalItems: () => {
+    return get().items.reduce((sum, item) => sum + item.quantity, 0);
+  },
+  
+  totalPrice: () => {
+    return get().items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+  },
+}));
+
+// Uso
+function Cart() {
+  const items = useCartStore((state) => state.items);
+  const totalItems = useCartStore((state) => state.totalItems());
+  const totalPrice = useCartStore((state) => state.totalPrice());
+  
+  return (
+    <div>
+      <p>Items: {totalItems}</p>
+      <p>Total: \${totalPrice.toFixed(2)}</p>
+    </div>
+  );
+}`,
+					},
+					{
+						name: "Shallow Equality",
+						description:
+							"Evitar re-renders con useShallow para objetos/arrays.",
+						example: `import { create } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
+
+interface Store {
+  nuts: number;
+  honey: number;
+  treats: Record<string, number>;
+}
+
+const useBearStore = create<Store>((set) => ({
+  nuts: 0,
+  honey: 0,
+  treats: {},
+}));
+
+// ❌ Sin useShallow: Re-renderiza aunque los valores no cambien
+function BadComponent() {
+  const { nuts, honey } = useBearStore((state) => ({
+    nuts: state.nuts,
+    honey: state.honey,
+  }));
+  // Nuevo objeto en cada render = re-render innecesario
+  return <div>{nuts} - {honey}</div>;
+}
+
+// ✅ Con useShallow: Solo re-renderiza si nuts o honey cambian
+function GoodComponent() {
+  const { nuts, honey } = useBearStore(
+    useShallow((state) => ({ nuts: state.nuts, honey: state.honey }))
+  );
+  return <div>{nuts} - {honey}</div>;
+}
+
+// ✅ También funciona con arrays
+function ArrayComponent() {
+  const [nuts, honey] = useBearStore(
+    useShallow((state) => [state.nuts, state.honey])
+  );
+  return <div>{nuts} - {honey}</div>;
+}`,
+					},
+					{
+						name: "Slices Pattern",
+						description:
+							"Dividir el store en slices para mejor organización.",
+						example: `import { create } from 'zustand';
+
+// Slice 1: User
+interface UserSlice {
+  user: { id: string; name: string } | null;
+  setUser: (user: UserSlice['user']) => void;
+  logout: () => void;
+}
+
+const createUserSlice = (set: any): UserSlice => ({
+  user: null,
+  setUser: (user) => set({ user }),
+  logout: () => set({ user: null }),
+});
+
+// Slice 2: Theme
+interface ThemeSlice {
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
+}
+
+const createThemeSlice = (set: any, get: any): ThemeSlice => ({
+  theme: 'light',
+  toggleTheme: () => set({
+    theme: get().theme === 'light' ? 'dark' : 'light'
+  }),
+});
+
+// Combinar slices
+type Store = UserSlice & ThemeSlice;
+
+const useAppStore = create<Store>()((...a) => ({
+  ...createUserSlice(...a),
+  ...createThemeSlice(...a),
+}));
+
+// Uso
+function App() {
+  const user = useAppStore((state) => state.user);
+  const theme = useAppStore((state) => state.theme);
+  const toggleTheme = useAppStore((state) => state.toggleTheme);
+  
+  return (
+    <div className={theme}>
+      <p>User: {user?.name ?? 'Guest'}</p>
+      <button onClick={toggleTheme}>Toggle Theme</button>
+    </div>
+  );
+}`,
+					},
+				],
+			},
+			{
+				name: "Nivel Avanzado",
+				items: [
+					{
+						name: "Persist Middleware",
+						description:
+							"Persistir estado en localStorage/sessionStorage.",
+						example: `import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
+interface AuthStore {
+  token: string | null;
+  user: { id: string; name: string } | null;
+  login: (token: string, user: AuthStore['user']) => void;
+  logout: () => void;
+}
+
+const useAuthStore = create<AuthStore>()(
+  persist(
+    (set) => ({
+      token: null,
+      user: null,
+      
+      login: (token, user) => set({ token, user }),
+      logout: () => set({ token: null, user: null }),
+    }),
+    {
+      name: 'auth-storage', // Clave en localStorage
+      storage: createJSONStorage(() => localStorage), // Por defecto
+      
+      // Opciones avanzadas
+      partialize: (state) => ({ token: state.token }), // Solo persistir token
+      
+      // Migración de versiones
+      version: 1,
+      migrate: (persistedState: any, version) => {
+        if (version === 0) {
+          // Migrar de v0 a v1
+          persistedState.token = null;
+        }
+        return persistedState;
+      },
+    }
+  )
+);
+
+// Uso
+function App() {
+  const { token, login, logout } = useAuthStore();
+  
+  return (
+    <div>
+      {token ? (
+        <button onClick={logout}>Logout</button>
+      ) : (
+        <button onClick={() => login('abc123', { id: '1', name: 'John' })}>
+          Login
+        </button>
+      )}
+    </div>
+  );
+}`,
+					},
+					{
+						name: "Immer Middleware",
+						description:
+							"Mutaciones inmutables con Immer (sintaxis más simple).",
+						example: `import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
+
+interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+interface TodoStore {
+  todos: Todo[];
+  addTodo: (text: string) => void;
+  toggleTodo: (id: string) => void;
+  removeTodo: (id: string) => void;
+}
+
+// Sin Immer (inmutabilidad manual)
+const useStoreWithoutImmer = create<TodoStore>((set) => ({
+  todos: [],
+  addTodo: (text) => set((state) => ({
+    todos: [...state.todos, { id: Date.now().toString(), text, completed: false }]
+  })),
+  toggleTodo: (id) => set((state) => ({
+    todos: state.todos.map(todo =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    )
+  })),
+}));
+
+// Con Immer (mutaciones directas)
+const useStoreWithImmer = create<TodoStore>()(
+  immer((set) => ({
+    todos: [],
+    
+    addTodo: (text) => set((state) => {
+      state.todos.push({ id: Date.now().toString(), text, completed: false });
+    }),
+    
+    toggleTodo: (id) => set((state) => {
+      const todo = state.todos.find(t => t.id === id);
+      if (todo) todo.completed = !todo.completed;
+    }),
+    
+    removeTodo: (id) => set((state) => {
+      const index = state.todos.findIndex(t => t.id === id);
+      if (index !== -1) state.todos.splice(index, 1);
+    }),
+  }))
+);`,
+					},
+					{
+						name: "DevTools Middleware",
+						description:
+							"Integración con Redux DevTools para debugging.",
+						example: `import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
+
+interface CounterStore {
+  count: number;
+  increment: () => void;
+  decrement: () => void;
+}
+
+const useCounterStore = create<CounterStore>()(
+  devtools(
+    (set) => ({
+      count: 0,
+      
+      // Logs automáticos en DevTools
+      increment: () => set(
+        (state) => ({ count: state.count + 1 }),
+        false, // No reemplazar estado
+        'counter/increment' // Nombre de la acción
+      ),
+      
+      decrement: () => set(
+        (state) => ({ count: state.count - 1 }),
+        false,
+        { type: 'counter/decrement', payload: { amount: 1 } } // Con payload
+      ),
+    }),
+    {
+      name: 'CounterStore', // Nombre en DevTools
+      enabled: process.env.NODE_ENV === 'development', // Solo en dev
+    }
+  )
+);
+
+// Combinar múltiples middlewares
+const useAdvancedStore = create<CounterStore>()(
+  devtools(
+    persist(
+      immer((set) => ({
+        count: 0,
+        increment: () => set((state) => { state.count += 1; }),
+        decrement: () => set((state) => { state.count -= 1; }),
+      })),
+      { name: 'counter-storage' }
+    ),
+    { name: 'AdvancedStore' }
+  )
+);`,
+					},
+					{
+						name: "Subscribe (Outside React)",
+						description:
+							"Escuchar cambios fuera de componentes React.",
+						example: `import { create } from 'zustand';
+
+interface NotificationStore {
+  message: string | null;
+  type: 'success' | 'error' | null;
+  show: (message: string, type: 'success' | 'error') => void;
+  hide: () => void;
+}
+
+const useNotificationStore = create<NotificationStore>((set) => ({
+  message: null,
+  type: null,
+  show: (message, type) => set({ message, type }),
+  hide: () => set({ message: null, type: null }),
+}));
+
+// Suscribirse a cambios (fuera de React)
+const unsubscribe = useNotificationStore.subscribe(
+  (state) => {
+    if (state.message) {
+      console.log(\`[\${state.type?.toUpperCase()}] \${state.message}\`);
+    }
+  }
+);
+
+// Acceder al estado sin suscripción
+const currentState = useNotificationStore.getState();
+console.log(currentState.message);
+
+// Actualizar estado desde fuera de React
+useNotificationStore.getState().show('Hello!', 'success');
+
+// Cleanup
+unsubscribe();
+
+// Subscribe con selector (requiere subscribeWithSelector middleware)
+import { subscribeWithSelector } from 'zustand/middleware';
+
+const useStore = create(
+  subscribeWithSelector((set) => ({ count: 0 }))
+);
+
+// Solo escuchar cambios en 'count'
+const unsub = useStore.subscribe(
+  (state) => state.count,
+  (count, prevCount) => {
+    console.log(\`Count changed from \${prevCount} to \${count}\`);
+  }
+);`,
+					},
+					{
+						name: "Vanilla Store (Sin React)",
+						description:
+							"Usar Zustand sin React (Node.js, otros frameworks).",
+						example: `import { createStore } from 'zustand/vanilla';
+
+interface CounterStore {
+  count: number;
+  increment: () => void;
+  decrement: () => void;
+}
+
+// Crear store vanilla (sin hooks)
+const counterStore = createStore<CounterStore>((set) => ({
+  count: 0,
+  increment: () => set((state) => ({ count: state.count + 1 })),
+  decrement: () => set((state) => ({ count: state.count - 1 })),
+}));
+
+// API disponible
+const { getState, setState, subscribe, getInitialState } = counterStore;
+
+// Leer estado
+console.log(getState().count); // 0
+
+// Actualizar estado
+setState({ count: 10 });
+
+// Ejecutar acciones
+getState().increment();
+console.log(getState().count); // 11
+
+// Suscribirse a cambios
+const unsubscribe = subscribe((state) => {
+  console.log('State changed:', state);
+});
+
+// Usar vanilla store en React
+import { useStore } from 'zustand';
+
+function Counter() {
+  const count = useStore(counterStore, (state) => state.count);
+  const increment = useStore(counterStore, (state) => state.increment);
+  
+  return (
+    <div>
+      <p>{count}</p>
+      <button onClick={increment}>+</button>
+    </div>
+  );
+}`,
+					},
+					{
+						name: "Context Pattern (Múltiples Instancias)",
+						description:
+							"Crear múltiples instancias del mismo store con Context.",
+						example: `import { createContext, useContext, useRef } from 'react';
+import { createStore, useStore } from 'zustand';
+
+interface CounterStore {
+  count: number;
+  increment: () => void;
+}
+
+// Crear contexto para el store
+const CounterStoreContext = createContext<ReturnType<typeof createStore<CounterStore>> | null>(null);
+
+// Provider que crea una nueva instancia
+export function CounterStoreProvider({ children }: { children: React.ReactNode }) {
+  const storeRef = useRef(
+    createStore<CounterStore>((set) => ({
+      count: 0,
+      increment: () => set((state) => ({ count: state.count + 1 })),
+    }))
+  );
+  
+  return (
+    <CounterStoreContext.Provider value={storeRef.current}>
+      {children}
+    </CounterStoreContext.Provider>
+  );
+}
+
+// Hook personalizado para consumir el store
+export function useCounterStore<T>(selector: (state: CounterStore) => T): T {
+  const store = useContext(CounterStoreContext);
+  if (!store) throw new Error('useCounterStore must be used within CounterStoreProvider');
+  return useStore(store, selector);
+}
+
+// Uso: Múltiples instancias independientes
+function App() {
+  return (
+    <>
+      <CounterStoreProvider>
+        <Counter title="Counter 1" />
+      </CounterStoreProvider>
+      
+      <CounterStoreProvider>
+        <Counter title="Counter 2" />
+      </CounterStoreProvider>
+    </>
+  );
+}
+
+function Counter({ title }: { title: string }) {
+  const count = useCounterStore((state) => state.count);
+  const increment = useCounterStore((state) => state.increment);
+  
+  return (
+    <div>
+      <h2>{title}</h2>
+      <p>{count}</p>
+      <button onClick={increment}>+</button>
+    </div>
+  );
+}`,
+					},
+					{
+						name: "Testing",
+						description:
+							"Testear stores de Zustand con Jest/Vitest.",
+						example: `import { create } from 'zustand';
+import { act, renderHook } from '@testing-library/react';
+
+interface CounterStore {
+  count: number;
+  increment: () => void;
+  reset: () => void;
+}
+
+const useCounterStore = create<CounterStore>((set) => ({
+  count: 0,
+  increment: () => set((state) => ({ count: state.count + 1 })),
+  reset: () => set({ count: 0 }),
+}));
+
+describe('CounterStore', () => {
+  beforeEach(() => {
+    // Reset store antes de cada test
+    useCounterStore.setState({ count: 0 });
+  });
+  
+  it('should increment count', () => {
+    const { result } = renderHook(() => useCounterStore());
+    
+    expect(result.current.count).toBe(0);
+    
+    act(() => {
+      result.current.increment();
+    });
+    
+    expect(result.current.count).toBe(1);
+  });
+  
+  it('should reset count', () => {
+    const { result } = renderHook(() => useCounterStore());
+    
+    act(() => {
+      result.current.increment();
+      result.current.increment();
+    });
+    
+    expect(result.current.count).toBe(2);
+    
+    act(() => {
+      result.current.reset();
+    });
+    
+    expect(result.current.count).toBe(0);
+  });
+  
+  // Test sin React (vanilla store)
+  it('should work without React', () => {
+    const { getState, setState } = useCounterStore;
+    
+    setState({ count: 5 });
+    expect(getState().count).toBe(5);
+    
+    getState().increment();
+    expect(getState().count).toBe(6);
+  });
+});`,
+					},
+				],
+			},
+		],
+	},
 ];
 
 export default frontend;
