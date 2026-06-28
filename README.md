@@ -2,7 +2,7 @@
 
 Mejora Code es una plataforma interactiva diseñada para servir como **Cheat Sheet avanzada** y guía de referencia rápida para desarrolladores. Centraliza conceptos, ejemplos prácticos y documentación oficial de las tecnologías más demandadas en el ecosistema actual (Frontend, Backend y APIs).
 
-![Demo](./public/vite.svg) *Planificado: Insertar captura de pantalla real de la aplicación aquí*
+![Demo](./public/vite.svg)   *Planificado: Insertar captura de pantalla real de la aplicación aquí*
 
 ---
 
