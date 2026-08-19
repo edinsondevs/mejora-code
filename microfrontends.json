@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/microfrontends.json",
+  "applications": {
+    "mejora-code": {
+      "development": {
+        "fallback": "devdocs.edinsondigital.com"
+      }
+    },
+    "depaola-studio": {
+      "routing": [
+        {
+          "paths": ["/depaola/:path*"]
+        }
+      ]
+    }
+  }
+}
